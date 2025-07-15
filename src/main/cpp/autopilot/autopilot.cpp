@@ -64,12 +64,12 @@ frc::Translation2d Autopilot::Correct(const frc::Translation2d &initial, const f
     frc::Translation2d adjustedGoal = goal.RotateBy(-angleOffset);
     frc::Translation2d adjustedInitial = initial.RotateBy(-angleOffset);
 
-    units::radian_t initialI = adjustedInitial.X();
-    units::radian_t goalI = adjustedGoal.X();
+    units::meter_t initialI = adjustedInitial.X();
+    units::meter_t goalI = adjustedGoal.X();
 
-    if (goalI > m_profile.Constraints().velocity)
+    if (goalI.value() > m_profile.Constraints().velocity.value())
     {
-        goalI = m_profile.Constraints().velocity;
+        goalI = units::meter_t{m_profile.Constraints().velocity.value()};
     }
 
     double adjustedI = std::min(goalI.value(), Push(initialI.value(), goalI.value(), m_profile.Constraints().acceleration));
@@ -78,7 +78,7 @@ frc::Translation2d Autopilot::Correct(const frc::Translation2d &initial, const f
 
 double Autopilot::Push(double start, double end, units::meters_per_second_squared_t accel)
 {
-    units::meter_t maxChange = accel * dt;
+    units::meters_per_second_t maxChange = accel * dt;
     if (std::abs(start - end) < maxChange.value())
     {
         return end;
@@ -88,24 +88,32 @@ double Autopilot::Push(double start, double end, units::meters_per_second_square
 
 frc::Translation2d Autopilot::CalculateSwirlyVelocity(const frc::Translation2d &offset, const APTarget &target)
 {
-    units::meter_t disp = offset.Norm();
-    frc::Rotation2d theta(offset.X().value(), offset.Y().value());
-    units::radian_t rads = theta.Radians();
+    units::meter_t disp = offset.Norm();                           // displacement magnitude (meter_t)
+    frc::Rotation2d theta(offset.X().value(), offset.Y().value()); // construct Rotation2d from raw doubles
+    units::radian_t rads = theta.Radians();                        // angle in radians
     units::meter_t dist = CalculateSwirlyLength(rads, disp);
 
-    units::meter_t vx = units::meter_t{theta.Cos() - rads.value() * theta.Sin()};
-    units::meter_t vy = units::meter_t{rads.value() * theta.Cos() + theta.Sin()};
+    // Calculate vx, vy as unitless doubles (direction vector components)
+    double vx = theta.Cos() - rads.value() * theta.Sin();
+    double vy = rads.value() * theta.Cos() + theta.Sin();
 
-    frc::Translation2d translation{vx, vy};
-    units::meter_t norm = translation.Norm();
+    frc::Translation2d translation{units::meter_t{vx}, units::meter_t{vy}}; // Translation2d takes doubles (unitless)
+
+    units::meter_t norm = translation.Norm(); // norm is a meter_t because Translation2d uses units::meter_t for components
 
     if (norm.value() == 0.0)
     {
-        return frc::Translation2d(); // Return zero vector if norm is 0 to avoid division by zero
+        return frc::Translation2d(); // zero vector if no direction
     }
 
-    frc::Translation2d unitVec = frc::Translation2d(translation.X() / norm, translation.Y() / norm);
-    return unitVec * CalculateMaxVelocity(dist, target.Velocity()).value();
+    // Normalize translation vector (unitless), so divide components by norm (units::meter_t)
+    frc::Translation2d unitVec = frc::Translation2d(translation.X() / norm.value(), translation.Y() / norm.value());
+
+    // Calculate speed (units::meter_t), extract raw double with .value()
+    double speed = CalculateMaxVelocity(dist, target.Velocity()).value();
+
+    // Multiply normalized direction (unitless) by scalar speed (double) to get velocity vector
+    return unitVec * speed;
 }
 
 units::meter_t Autopilot::CalculateSwirlyLength(units::radian_t theta, units::meter_t radius)
@@ -113,10 +121,11 @@ units::meter_t Autopilot::CalculateSwirlyLength(units::radian_t theta, units::me
     if (theta.value() == 0.0)
         return radius;
 
-    theta = units::radian_t{std::abs(theta.value())};
-    double hypot = std::hypot(theta.value(), 1.0);
+    const double thetaVal = std::abs(theta.value());
+    const double hypot = std::hypot(thetaVal, 1.0);
+    const double logTerm = std::log(thetaVal + hypot);
     units::meter_t u1 = radius * hypot;
-    units::meter_t u2 = radius * std::log(theta + hypot) / theta;
+    units::meter_t u2 = radius * (logTerm / thetaVal);
     return units::meter_t{0.5 * (u1 + u2)};
 }
 
