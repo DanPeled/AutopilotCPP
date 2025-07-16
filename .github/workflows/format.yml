@@ -1,0 +1,29 @@
+name: Lint and Format
+
+on:
+  pull_request:
+  push:
+jobs:
+  wpiformat:
+    name: "wpiformat"
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch all history and metadata
+        run: |
+          git checkout -b pr
+          git branch -f main origin/main
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install wpiformat
+        run: |
+          python -m venv ${{ runner.temp }}/wpiformat
+          ${{ runner.temp }}/wpiformat/bin/pip3 install wpiformat==2024.51
+      - name: Run
+        run: ${{ runner.temp }}/wpiformat/bin/wpiformat
+      - name: Check output
+        run: git --no-pager diff --exit-code HEAD
