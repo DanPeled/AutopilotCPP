@@ -32,6 +32,8 @@ class APTarget {
   std::optional<units::meter_t> m_rotationRadius;
 
  public:
+  APTarget() = delete;
+
   /**
    * Creates a new autopilot target with the given target pose, no entry angle,
    * and no end velocity.

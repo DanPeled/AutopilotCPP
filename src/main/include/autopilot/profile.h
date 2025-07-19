@@ -34,6 +34,8 @@ class APProfile {
   units::meter_t m_beelineRadius;
 
  public:
+  APProfile() = delete;
+
   /**
    * Builds an APProfile with the given constraints. Tolerated error and beeline
    * radius are all set to zero.
