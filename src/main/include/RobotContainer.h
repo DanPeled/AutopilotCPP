@@ -11,8 +11,15 @@
 #include <frc2/command/CommandPtr.h>
 #include <frc2/command/button/CommandXboxController.h>
 
+#include <memory>
+
 #include "Constants.h"
-#include "subsystems/ExampleSubsystem.h"
+#include "subsystems/drivetrain/drivetrain.h"
+
+#define MAKE_UNIQUE_BASE(Base, Derived, ...) \
+  std::unique_ptr<Base> {                    \
+    std::make_unique<Derived>(__VA_ARGS__)   \
+  }
 
 /**
  * This class is where the bulk of the robot should be declared.  Since
@@ -32,8 +39,6 @@ class RobotContainer {
   frc2::CommandXboxController m_driverController{
       OperatorConstants::kDriverControllerPort};
 
-  // The robot's subsystems are defined here...
-  ExampleSubsystem m_subsystem;
-
   void ConfigureBindings();
+  std::optional<TankDrive> m_drive;
 };

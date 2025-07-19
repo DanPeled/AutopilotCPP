@@ -8,32 +8,28 @@
 
 #include "RobotContainer.h"
 
+#include <frc/RobotBase.h>
 #include <frc2/command/button/Trigger.h>
 
-#include "commands/Autos.h"
-#include "commands/ExampleCommand.h"
+#include <memory>
+
+#include "subsystems/drivetrain/real.h"
+#include "subsystems/drivetrain/sim.h"
 
 RobotContainer::RobotContainer() {
+  std::unique_ptr<TankDriveIO> driveIO =
+      frc::RobotBase::IsSimulation()
+          ? MAKE_UNIQUE_BASE(TankDriveIO, TankDriveIOSim)
+          : MAKE_UNIQUE_BASE(TankDriveIO, TankDriveIOReal);
+
   // Initialize all of your commands and subsystems here
 
   // Configure the button bindings
   ConfigureBindings();
 }
 
-void RobotContainer::ConfigureBindings() {
-  // Configure your trigger bindings here
-
-  // Schedule `ExampleCommand` when `exampleCondition` changes to `true`
-  frc2::Trigger([this] {
-    return m_subsystem.ExampleCondition();
-  }).OnTrue(ExampleCommand(&m_subsystem).ToPtr());
-
-  // Schedule `ExampleMethodCommand` when the Xbox controller's B button is
-  // pressed, cancelling on release.
-  m_driverController.B().WhileTrue(m_subsystem.ExampleMethodCommand());
-}
+void RobotContainer::ConfigureBindings() {}
 
 frc2::CommandPtr RobotContainer::GetAutonomousCommand() {
-  // An example command will be run in autonomous
-  return autos::ExampleAuto(&m_subsystem);
+  return frc2::CommandPtr{std::unique_ptr<frc2::Command>{}};
 }
