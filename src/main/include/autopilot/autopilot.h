@@ -10,7 +10,6 @@
 
 #include <frc/geometry/Pose2d.h>
 #include <frc/geometry/Rotation2d.h>
-#include <frc/geometry/Transform2d.h>
 #include <frc/geometry/Translation2d.h>
 #include <units/angle.h>
 #include <units/length.h>
@@ -22,6 +21,12 @@
 #include "target.h"
 
 namespace autopilot {
+struct APResult {
+  units::meters_per_second_t vx;
+  units::meters_per_second_t vy;
+  frc::Rotation2d targetAngle;
+};
+
 /**
  * Autopilot is a class that tries to drive a target to a goal in 2 dimensional
  * space.
@@ -51,9 +56,9 @@ class Autopilot {
    * @param velocity The robot's current <b>field relative</b> velocity.
    * @param target The target the robot should drive towards.
    */
-  frc::Transform2d Calculate(const frc::Pose2d& current,
-                             const frc::Translation2d& velocity,
-                             const APTarget& target);
+  APResult Calculate(const frc::Pose2d& current,
+                     const frc::Translation2d& velocity,
+                     const APTarget& target);
   /**
    * Returns whether the given pose is within tolerance for the target
    */
