@@ -14,15 +14,15 @@ using namespace autopilot;
 
 Autopilot::Autopilot(const APProfile& profile) : m_profile(profile) {}
 
-frc::Transform2d Autopilot::Calculate(const frc::Pose2d& current,
-                                      const frc::Translation2d& velocity,
-                                      const APTarget& target) {
+APResult Autopilot::Calculate(const frc::Pose2d& current,
+                              const frc::Translation2d& velocity,
+                              const APTarget& target) {
   frc::Translation2d offset = ToTargetCoordinateFrame(
       target.Reference().Translation() - current.Translation(), target);
 
   if (offset == frc::Translation2d()) {
-    return frc::Transform2d(frc::Translation2d(),
-                            target.Reference().Rotation());
+    return APResult{
+        .vx = 0_mps, .vy = 0_mps, .targetAngle = target.Reference().Rotation()};
   }
 
   frc::Translation2d initial = ToTargetCoordinateFrame(velocity, target);
@@ -35,14 +35,19 @@ frc::Transform2d Autopilot::Calculate(const frc::Pose2d& current,
     frc::Translation2d out = Correct(initial, goal);
     frc::Translation2d velo = ToGlobalCoordinateFrame(out, target);
     frc::Rotation2d rot = GetRotationTarget(current.Rotation(), target, disp);
-    return frc::Transform2d(velo, rot);
+    return APResult{.vx = units::meters_per_second_t{velo.X().value()},
+                    .vy = units::meters_per_second_t{velo.Y().value()},
+                    .targetAngle = rot};
   }
 
   frc::Translation2d goal = CalculateSwirlyVelocity(offset, target);
   frc::Translation2d out = Correct(initial, goal);
   frc::Translation2d velo = ToGlobalCoordinateFrame(out, target);
   frc::Rotation2d rot = GetRotationTarget(current.Rotation(), target, disp);
-  return frc::Transform2d(velo, rot);
+
+  return APResult{.vx = units::meters_per_second_t{velo.X().value()},
+                  .vy = units::meters_per_second_t{velo.Y().value()},
+                  .targetAngle = rot};
 }
 
 frc::Translation2d Autopilot::ToTargetCoordinateFrame(
