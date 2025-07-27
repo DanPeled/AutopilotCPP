@@ -188,10 +188,10 @@ compile_commands.json
 .factorypath
 
 # Ignore Doxygen generated files
-docs/html/
-docs/latex/
-docs/xml/
-docs/man/
+html/
+latex/
+xml/
+man/
 
 # Ignore temporary files Doxygen might create
 *.dot

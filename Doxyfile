@@ -373,9 +373,9 @@ EXAMPLE_PATH           =
 EXAMPLE_PATTERNS       = *
 
 
-INPUT = src/main/cpp
+INPUT = ./src/main/include/autopilot/
 RECURSIVE = YES
-FILE_PATTERNS = *.cpp *.cxx *.cc *.c *.h *.hpp *.hxx *.hh
+FILE_PATTERNS = *.h *.hpp *.hxx *.hh
 
 
 IMAGE_PATH             =
